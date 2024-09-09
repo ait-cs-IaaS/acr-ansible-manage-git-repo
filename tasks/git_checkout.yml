@@ -1,0 +1,39 @@
+---
+
+# Check if the branch exists on the remote repository
+- name: Check if the branch exists remotely
+  ansible.builtin.command:
+    cmd: git ls-remote --heads origin {{ git_branch }}
+  register: branch_exists
+  args:
+    chdir: "{{ git_dest_dir }}/"
+
+# Checkout or create the branch locally
+# If the branch does not exist remotely, create it locally and switch to it
+- name: Checkout or create branch
+  ansible.builtin.shell:
+    cmd: git switch {{ git_branch }} || git switch -c {{ git_branch }}
+  args:
+    chdir: "{{ git_dest_dir }}/"
+  when: 
+    - branch_exists.stdout == ""
+
+# Push the newly created branch if it did not exist on remote
+# Push the new branch to origin if it was created locally
+- name: Push newly created branch to origin
+  ansible.builtin.command: 
+    cmd: git push --set-upstream origin {{ git_branch }}
+  args:
+    chdir: "{{ git_dest_dir }}/"
+  when: 
+    - branch_exists.stdout == ""
+
+# Switch to existing branch in the repository if it already exists
+# If the branch already exists, switch to it directly
+- name: Checkout existing branch in the repository
+  ansible.builtin.command:
+    cmd: git switch {{ git_branch }}
+  args:
+    chdir: "{{ git_dest_dir }}/"
+  when: 
+    - branch_exists.stdout != ""

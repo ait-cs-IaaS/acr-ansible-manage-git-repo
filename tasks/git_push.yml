@@ -1,0 +1,19 @@
+---
+
+- name: Stage local changes
+  ansible.builtin.shell: |
+    git add .
+  args:
+    chdir: "{{ git_dest_dir }}/"
+
+- name: Commit changes to the repository
+  ansible.builtin.shell: |
+    git commit -m "Automated Commit by Ansible: {{ git_push_title | default('') }}"
+  args:
+    chdir: "{{ git_dest_dir }}/"
+
+- name: Push committed changes to remote
+  ansible.builtin.shell: |
+    git push
+  args:
+    chdir: "{{ git_dest_dir }}/"

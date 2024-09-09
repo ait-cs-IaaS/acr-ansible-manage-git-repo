@@ -1,0 +1,8 @@
+---
+
+# Clone repository if it does not already exist
+- name: Clone repository
+  ansible.builtin.git:
+    repo: "{{ git_repo }}"
+    dest: "{{ git_dest_dir }}/"
+  when: not local_repo.stat.exists

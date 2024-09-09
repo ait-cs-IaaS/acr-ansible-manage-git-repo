@@ -1,0 +1,50 @@
+---
+
+# Create required folder structure if it does not exist
+# Ensuring proper folder structure is set up before cloning
+- name: Ensure required folder structure exists
+  ansible.builtin.file:
+    path: '{{ git_dest_dir | dirname }}'
+    state: directory
+    recurse: true
+    owner: "{{ git_owner | default(omit) }}"
+    group: "{{ git_group | default(omit) }}"
+
+# Check if the .git directory exists (i.e., repository is already present)
+- name: Check if repository exists
+  ansible.builtin.stat:
+    path: "{{ git_dest_dir }}/.git"
+  register: local_repo
+
+# Clone repository if it does not already exist
+- name: Clone repository if not present
+  ansible.builtin.git:
+    repo: "{{ git_repo }}"
+    dest: "{{ git_dest_dir }}/"
+  when:
+    - '"clone" in git_actions'
+    - not local_repo.stat.exists
+
+# Pull the latest changes if the repository exists and actions require pull/checkout
+- name: Pull latest changes from the repository
+  ansible.builtin.command:
+    cmd: git pull
+  args:
+    chdir: "{{ git_dest_dir }}/"
+  when: 
+    - '"pull" in git_actions or git_branch is defined'
+    - local_repo.stat.exists
+
+# Checkout or create branch if needed, then push if required
+- name: Handle branch checkout or creation
+  ansible.builtin.include_tasks: git_checkout.yml
+  when:
+    - '"checkout" in git_actions or git_branch is defined'
+    - local_repo.stat.exists
+
+# Push changes to the repository
+- name: Push local changes to remote
+  ansible.builtin.include_tasks: git_push.yml
+  when: 
+    - '"push" in git_actions'
+
