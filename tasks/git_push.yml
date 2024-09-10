@@ -1,19 +1,33 @@
 ---
 
 - name: Stage local changes
-  ansible.builtin.shell: |
-    git add .
+  become: "{{ git_owner is defined }}"
+  become_user: "{{ git_owner | default('') }}"
+  ansible.builtin.command:
+    cmd: git add .
   args:
     chdir: "{{ git_dest_dir }}/"
 
 - name: Commit changes to the repository
-  ansible.builtin.shell: |
-    git commit -m "Automated Commit by Ansible: {{ git_push_title | default('') }}"
+  become: "{{ git_owner is defined }}"
+  become_user: "{{ git_owner | default('') }}"
+  ansible.builtin.command:
+    cmd: "git commit -m 'Automated Commit by Ansible: {{ git_push_title | default('') }}'"
   args:
     chdir: "{{ git_dest_dir }}/"
+  register: git_commit_response
+  failed_when: 
+    - git_commit_response.rc > 0
+    - 'not "nothing to commit" in git_commit_response.stdout'
 
 - name: Push committed changes to remote
-  ansible.builtin.shell: |
-    git push
+  become: "{{ git_owner is defined }}"
+  become_user: "{{ git_owner | default('') }}"
+  ansible.builtin.command:
+    cmd: git push
   args:
     chdir: "{{ git_dest_dir }}/"
+  register: git_push_response
+  failed_when: 
+    - git_push_response.rc > 0
+    - 'not "Everything up-to-date" in git_push_response.stderr'

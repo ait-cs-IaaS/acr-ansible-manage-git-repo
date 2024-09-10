@@ -1,12 +1,10 @@
 ---
 
-# git_actions:
-#   - clone
-#   - pull
-#   - checkout
-#   - push
 # git_dest_dir
 # git_repo
 # git_branch
 # git_owner
 # git_group
+
+git_push: false
+git_group: "{{ git_owner | default(omit) }}"

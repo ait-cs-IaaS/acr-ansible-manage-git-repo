@@ -11,29 +11,32 @@
 # Checkout or create the branch locally
 # If the branch does not exist remotely, create it locally and switch to it
 - name: Checkout or create branch
+  become: "{{ git_owner is defined }}"
+  become_user: "{{ git_owner | default('') }}"
   ansible.builtin.shell:
     cmd: git switch {{ git_branch }} || git switch -c {{ git_branch }}
   args:
     chdir: "{{ git_dest_dir }}/"
-  when: 
-    - branch_exists.stdout == ""
+  when: branch_exists.stdout == ""
 
 # Push the newly created branch if it did not exist on remote
 # Push the new branch to origin if it was created locally
 - name: Push newly created branch to origin
+  become: "{{ git_owner is defined }}"
+  become_user: "{{ git_owner | default('') }}"
   ansible.builtin.command: 
     cmd: git push --set-upstream origin {{ git_branch }}
   args:
     chdir: "{{ git_dest_dir }}/"
-  when: 
-    - branch_exists.stdout == ""
+  when: branch_exists.stdout == ""
 
 # Switch to existing branch in the repository if it already exists
 # If the branch already exists, switch to it directly
 - name: Checkout existing branch in the repository
+  become: "{{ git_owner is defined }}"
+  become_user: "{{ git_owner | default('') }}"
   ansible.builtin.command:
     cmd: git switch {{ git_branch }}
   args:
     chdir: "{{ git_dest_dir }}/"
-  when: 
-    - branch_exists.stdout != ""
+  when: branch_exists.stdout != ""
